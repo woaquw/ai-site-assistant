@@ -1,0 +1,13 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "brightmove-chat",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": true,
+  // Cloudflare Workers AI: free daily allowance, no API key needed.
+  "ai": { "binding": "AI" },
+  "vars": {
+    "MODEL": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "ALLOWED_ORIGINS": "https://woaquw.github.io,http://localhost:8765,http://127.0.0.1:8765"
+  }
+}
