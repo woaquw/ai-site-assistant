@@ -1,10 +1,12 @@
-# Brightmove AI Assistant — Website Chatbot
+# AI Site Assistant — one chatbot backend for many websites
 
-An AI chat assistant for a small business website. It answers visitors' questions about classes, prices, schedule and policies **only from the business's own knowledge base**, and nudges interested visitors to book a free trial.
+An AI chat assistant for small business websites. It answers visitors' questions **only from each business's own knowledge base** and nudges interested visitors to book. One Cloudflare Worker serves several sites; each site sends its `bot` id and gets its own facts, contact details and call to action.
 
-**Live demo:** open https://woaquw.github.io/brightmove-studio/ and click the chat bubble in the bottom-right corner.
+**Live demos** (click the chat button in the bottom-right corner):
+- Recording studio: https://woaquw.github.io/quiet-hours-studio/ ("Ask the engineer")
+- Pilates studio: https://woaquw.github.io/brightmove-studio/
 
-![Chat widget on the studio website](docs/preview.png)
+![Chat widget on the recording studio website](docs/preview.png)
 
 ## How it works
 
@@ -13,9 +15,9 @@ Website widget (chat.js)  →  Cloudflare Worker (/chat)  →  Workers AI (Llama
         ↑  streamed answer (Server-Sent Events)  ←
 ```
 
-- **Widget** (in the [landing page repo](https://github.com/woaquw/brightmove-studio): `chat.js`, `chat.css`): floating button, suggested questions, typing indicator, answer streamed word by word, "Book a free class" button when the bot suggests booking, mobile full-screen layout, friendly fallback if the service is down.
-- **Worker** (`src/index.ts`): validates and trims the conversation, adds the system prompt with the business facts, calls the model and streams the reply back.
-- **Knowledge base** (`src/knowledge.ts`): plain text with the studio's facts. Reusing the bot for another business means editing this one file.
+- **Widget** (`chat.js` + `chat.css` in the [Quiet Hours](https://github.com/woaquw/quiet-hours-studio) and [Brightmove](https://github.com/woaquw/brightmove-studio) repos, configured with `window.CHAT_CONFIG`): floating button, suggested questions, typing indicator, answer streamed word by word, "Book a free class" button when the bot suggests booking, mobile full-screen layout, friendly fallback if the service is down.
+- **Worker** (`src/index.ts`): validates and trims the conversation, picks the bot, adds its system prompt, calls the model and streams the reply back.
+- **Bots** (`src/bots/*.ts`): plain-text facts per business plus contact and booking hints (`src/bots/index.ts`). Adding a new client = one file and one line.
 
 ## Safety and cost control
 
@@ -25,7 +27,7 @@ Website widget (chat.js)  →  Cloudflare Worker (/chat)  →  Workers AI (Llama
 - **Limits:** last 12 messages, 600 characters per message, 350 tokens per answer.
 - **Guardrails in the prompt:** answer only from the facts, say "not sure" instead of guessing, no invented prices or discounts, no medical advice, stay on topic, ignore "ignore your instructions" requests. Replies in the visitor's language.
 
-Tested examples: price and schedule questions (correct facts), "I'm a beginner, where do I start?" (recommends Mat Pilates and the free class), an off-topic coding request (politely declined), a fake discount request (refused), a question in Russian (answered in Russian, unknown parking info → "not sure, please call").
+Tested examples: "How much for mixing 5 songs with vocal tuning?" → $900 + $200 = $1,100 (matches the site's price builder); gear and session-prep questions; a mic the studio doesn't list → "not sure, please call"; an off-topic coding request (declined); a fake discount request (refused); a question in Russian (answered in Russian).
 
 ## Switching the model
 
@@ -40,4 +42,4 @@ npm run dev      # local worker
 npm run deploy   # publish to <name>.workers.dev
 ```
 
-The studio and its facts are fictional; this is a portfolio project.
+The businesses and their facts are fictional; this is a portfolio project.

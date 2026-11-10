@@ -1,4 +1,4 @@
-import { SYSTEM_PROMPT } from "./knowledge";
+import { systemPrompt } from "./bots";
 
 export interface Env {
   AI: Ai;
@@ -32,19 +32,22 @@ export default {
     if (!allowed.includes(origin)) return json({ error: "Origin not allowed" }, 403, cors);
 
     let messages: ChatMessage[];
+    let prompt: string | null;
     try {
-      const body = (await request.json()) as { messages?: unknown };
+      const body = (await request.json()) as { messages?: unknown; bot?: unknown };
       messages = sanitize(body.messages);
+      prompt = systemPrompt(typeof body.bot === "string" ? body.bot : undefined);
     } catch {
       return json({ error: "Invalid JSON" }, 400, cors);
     }
+    if (!prompt) return json({ error: "Unknown bot" }, 400, cors);
     if (!messages.length || messages[messages.length - 1].role !== "user") {
       return json({ error: "The last message must be from the user" }, 400, cors);
     }
 
     try {
       const stream = (await env.AI.run(env.MODEL as keyof AiModels, {
-        messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+        messages: [{ role: "system", content: prompt }, ...messages],
         max_tokens: MAX_TOKENS,
         temperature: 0.3,
         stream: true,
